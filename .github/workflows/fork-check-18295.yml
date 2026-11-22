@@ -1,0 +1,32 @@
+name: fork-check-18295
+on:
+  push:
+    branches: [ci/18295-fork-check]
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install and compile (typecheck)
+        run: npm ci
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compile (typecheck)
+        run: npm run compile
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+      - name: Lint touched packages
+        run: |
+          npx lerna run lint --scope @theia/core --scope @theia/plugin-ext-vscode
+      - name: Test plugin-ext-vscode
+        run: |
+          npx lerna run test --scope @theia/plugin-ext-vscode
